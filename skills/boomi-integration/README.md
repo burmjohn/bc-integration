@@ -59,6 +59,17 @@ Alternatively, navigate the `/plugin` menu interactively within Claude Code to a
 
 Clone or copy this skill directory into the location your platform uses for agent skills. Consult your platform's documentation for the correct skill directory path.
 
+## Portable Skills
+
+The integration repo also exposes host-neutral skills for agents that can load
+skill folders directly:
+
+- `boomi-integration`: build, sync, deploy, and test Boomi components.
+- `boomi-env-setup`: guide `.env` setup and connection testing.
+- `boomi-template-workspace`: create or refresh reusable workspace templates.
+- `boomi-tidy-up`: clean generated development artifacts.
+- `boomi-canvas-arranger`: review step-path integrity and canvas layout.
+
 ## Project Setup
 
 Once the skill is installed it works in an individual project folder as follows:

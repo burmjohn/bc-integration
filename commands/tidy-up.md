@@ -5,6 +5,9 @@ allowed-tools: Bash
 
 Clean the Boomi workspace by removing all files from development directories while preserving `.gitkeep` files and directory structure.
 
+For host-neutral agents, the equivalent workflow is available as the
+`boomi-tidy-up` skill.
+
 ## What to Clean
 
 - `active-development/*/` - All component files

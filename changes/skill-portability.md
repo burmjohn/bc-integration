@@ -1,0 +1,2 @@
+- Add host-neutral Boomi setup, template, cleanup, and canvas-arrangement skills while preserving existing Claude plugin commands and agent prompt.
+- Clarify Boomi integration skill path resolution for agents outside Claude Code.

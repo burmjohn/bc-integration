@@ -4,6 +4,9 @@ description: Interactive guide for setting up Boomi platform credentials
 
 Guide the user through setup or re-setup of their `.env` file for Boomi platform access.
 
+For host-neutral agents, the equivalent workflow is available as the
+`boomi-env-setup` skill.
+
 ## Steps
 
 1. **Check current state**:

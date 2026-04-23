@@ -31,7 +31,7 @@ See the [Boomi Companion marketplace](https://github.com/OfficialBoomi/boomi-com
 
 Found a bug or have a feature idea? Email developer-offerings@boomi.com with a clear description, steps to reproduce, and any relevant error messages.
 
-## Installation
+## Claude Code Installation
 
 ```bash
 /plugin marketplace add OfficialBoomi/boomi-companion
@@ -40,7 +40,18 @@ Found a bug or have a feature idea? Email developer-offerings@boomi.com with a c
 
 Or browse and install via `/plugin` interactively.
 
-## Commands
+## Portable Skills
+
+The integration repo also exposes host-neutral skills for agents that can load
+skill folders directly:
+
+- `boomi-integration`: build, sync, deploy, and test Boomi components.
+- `boomi-env-setup`: guide `.env` setup and connection testing.
+- `boomi-template-workspace`: create or refresh reusable workspace templates.
+- `boomi-tidy-up`: clean generated development artifacts.
+- `boomi-canvas-arranger`: review step-path integrity and canvas layout.
+
+## Claude Code Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -48,7 +59,7 @@ Or browse and install via `/plugin` interactively.
 | `/bc-integration:configure-template-workspace` | Create a reusable project template |
 | `/bc-integration:tidy-up` | Clean development artifacts |
 
-After running `configure-template-workspace`, use `/freshies` from any empty directory to scaffold a new project.
+After running `configure-template-workspace` in Claude Code, use `/freshies` from any empty directory to scaffold a new project.
 
 ## Credential Handling
 
@@ -60,4 +71,3 @@ After running `configure-template-workspace`, use `/freshies` from any empty dir
 - The default deny rules in the template workspace `.claude/settings.json` guide the agent away from common file-reading paths, but a sufficiently motivated or creatively prompted agent could find indirect ways to access file contents
 
 If you need stricter isolation, consider Claude Code's [sandboxing options](https://docs.anthropic.com/en/docs/claude-code/security) or OS-level file permissions.
-

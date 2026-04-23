@@ -41,7 +41,7 @@ Run scripts from the project workspace directory (so `.env` and `active-developm
 - **Version management**: version_management_guide.md + cli_tool_reference.md version management section
 
 ## First-Time User Detection
-§ Running CLI tools already verifies `<skill-path>` and reports `.env` status via `boomi-env-check.sh`. If `bash <skill-path>/scripts/boomi-folder-create.sh --test-connection` fails, route the user through `references/guides/user_onboarding_guide.md` or `/bc-integration:env-setup-guide`.
+§ Running CLI tools already verifies `<skill-path>` and reports `.env` status via `boomi-env-check.sh`. If `bash <skill-path>/scripts/boomi-folder-create.sh --test-connection` fails, route the user through `references/guides/user_onboarding_guide.md` or use the `boomi-env-setup` skill when available. In Claude Code, `/bc-integration:env-setup-guide` remains a supported adapter for the same workflow.
 
 ## Connection Discovery & Credential Security
 **Connection re-use is recommended.** Pulling existing connections keeps credentials out of the conversation. Offer the connection discovery workflow first, but respect the user's choice if they prefer to provide credentials directly. See `references/BOOMI_THINKING.md` § Connection Discovery for the full workflow.

@@ -6,6 +6,9 @@ This command sets up the user's personal Boomi project template (referred to as 
 
 The steps below locate the plugin's **Reference Template** and copy it into the **User Template** workspace location the user specifies.
 
+For host-neutral agents, the equivalent workflow is available as the
+`boomi-template-workspace` skill.
+
 ## Workflow
 
 ### Step 1: Get Template Location
