@@ -33,6 +33,7 @@ Run scripts from the project workspace directory (so `.env` and `active-developm
 - **B2B/EDI Trading Partners**: trading_partner_component.md + trading_partner_steps.md + edi_profile_component.md + platform_entities/edi_b2b.md
 - **Disk V2 (File System)**: diskv2_connection_component + diskv2_connector_operation_component + diskv2_connector_step
 - **MFT (Managed File Transfer)**: mft_connection_component + mft_connector_operation_component + mft_connector_step
+- **Mail (IMAP) — Email send/receive/move**: mail_imap_connection_component + mail_imap_connector_operation_component + mail_imap_connector_step + (document_cache_component for attachments)
 - **MCP Server (AI Tool Exposure)**: mcp_server_connection_component + mcp_server_operation_component + mcp_server_start_step + platform_entities/mcp_server.md
 - **Agent Step (AI Agent in process)**: agent_step.md
 - **Flow Services**: fss_operation_component + fss_start_step + flow_service_component + platform_entities/flow.md
@@ -129,6 +130,8 @@ Default to the local `references/` content — it is curated and verified for th
 │   │   ├── diskv2_connector_operation_component.md # Use when: defining Disk V2 operations - file CREATE/UPSERT/GET/QUERY/LIST/DELETE/LISTEN, filters, actionIfFileExists, directory overrides
 │   │   ├── mft_connection_component.md         # connectorType: "thru-8SHH0W-thrumf-technology". Use when: creating MFT connections - Thru MFT partner connector credentials
 │   │   ├── mft_connector_operation_component.md # Use when: defining MFT operations - file pickup, drop-off, status updates
+│   │   ├── mail_imap_connection_component.md   # connectorType: "mailsdk". Use when: creating Mail (IMAP) connections - SMTP outbound + IMAP inbound, Basic Auth or OAuth 2.0, connection security (NONE/SSL_TLS/STARTTLS)
+│   │   ├── mail_imap_connector_operation_component.md # Use when: defining Mail (IMAP) operations - Receive (query with filters, attachment cache), Send (with attachments via cache), Move (folder-to-folder with request profile)
 │   │   ├── web_services_server_start_shape_operation.md # connectorType: "wss". Use when: converting process to API, creating HTTP listener endpoints, defining request/response profiles for Boomi processes to be exposed as web services/ API end points
 │   │   ├── api_service_component.md          # type: "webservice". Use when: deploying REST APIs to Advanced atoms (wraps WSS Listen processes under a curated URL tree; REST only)
 │   │   ├── fss_operation_component.md    # connectorType: "fss". Use when: creating Flow Services Server operations for Flow-callable Integration processes
@@ -150,6 +153,7 @@ Default to the local `references/` content — it is curated and verified for th
 │   │   ├── custom_connector_step.md # Custom SDK connectors. Use when: using connectors built with Boomi's Java Connector SDK
 │   │   ├── diskv2_connector_step.md # Disk V2 file operations. Use when: reading, writing, querying, listing, or deleting files on local/network file systems
 │   │   ├── mft_connector_step.md    # MFT operations. Use when: picking up or dropping off files via Boomi MFT (Thru)
+│   │   ├── mail_imap_connector_step.md # Mail (IMAP) connector step. Use when: sending email via SMTP, receiving email via IMAP (with attachment handling), or moving messages between mailbox folders
 │   │   ├── event_streams_steps.md   # Event Streams operations. Use when: pub/sub messaging, event-driven processing, async communication between processes
 │   │   ├── agent_step.md            # AI Agent step. Use when: integrating Agent Control Tower agents into processes
 │   │   ├── message_step.md      # Template engines for generating content. Use when: building payloads, creating test data, clearing documents
@@ -160,6 +164,7 @@ Default to the local `references/` content — it is curated and verified for th
 │   │   ├── decision_step.md     # Conditional routing based on comparisons. Use when: implementing if/then logic, routing based on property values or field comparisons
 │   │   ├── route_step.md        # Multi-path conditional routing. Use when: routing documents to 3+ paths based on a value (switch/case), replacing chained decision steps
 │   │   ├── branch_step.md       # Sequential multi-path document routing. Use when: same data needs different processing for different targets or a process should execute multiple distinct workflows
+│   │   ├── flow_control_step.md # Batching and parallel fiber execution. Use when: serializing downstream steps per-document, splitting documents into batches, or spreading documents across parallel threads/processes
 │   │   ├── process_call_step.md # Subprocess invocation and return handling. Use when: modularizing logic, enabling test mode for listener-based processes, combining documents across branches
 │   │   ├── try_catch_step.md    # Error handling and exception routing. Use when: wrapping operations that may fail, implementing process-wide error handling
 │   │   ├── exception_step.md   # Terminate execution with error message. Use when: failing a document or process on validation failure, unhappy-path exits from Decision/Route
@@ -197,6 +202,7 @@ Default to the local `references/` content — it is curated and verified for th
     ├── boomi-version-history.sh # List component version history (versions, dates, branch, current status)
     ├── boomi-component-diff.sh  # Compare two versions of a component (structured JSON diff)
     ├── boomi-component-search.sh # Query components by folder/name/type/reference; writes JSON to active-development/inventories/
+    ├── boomi-extensions.sh      # Get/set environment extension values via EnvironmentExtensions API; auto-snapshots current state before every write
     ├── event-streams-setup.sh   # Create Event Streams topics and subscriptions
     └── boomi-branch.sh         # Branch and merge operations (list, create, delete, merge, status)
 ```
@@ -352,6 +358,10 @@ Specialized tools handle the development lifecycle. All tools are bash scripts (
 
 - `event-streams-setup.sh` - Create and manage Event Streams topics, subscriptions, and tokens
     - Commands: `query-tokens`, `create-token <name> [consume] [produce]`, `provision-connection <name> <token-name> <folder-id>`, `create-topic <name>`, `list-topics`, `query-topic <name>`, `create-subscription <topic> <name>`, `rest-produce <topic> <payload> [token-name]`
+
+- `boomi-extensions.sh` - Read and write environment extension *values* via the EnvironmentExtensions API
+    - Commands: `get`, `set --file <path>`, `set -` (stdin), `--help`
+    - Scope: values only; *declarations* (`<bns:processOverrides>`) go through `boomi-component-push.sh`. See `references/components/process_extensions.md` for payload shapes, partial-write behavior, and pre-write snapshots.
 
 The CLI tools reside at `<skill-path>/scripts/`. They are not in a given active development workspace.
 
