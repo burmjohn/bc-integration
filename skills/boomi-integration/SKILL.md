@@ -105,21 +105,26 @@ Default to the local `references/` content — it is curated and verified for th
 │   │   └── edi_sap_patterns.md          # Read when: EDI ↔ SAP IDoc integration — IDoc segment hierarchy/cardinality, qualifier-driven routing (DTM/NAD → IDoc fields), composite decomposition, cross-reference table design, Z-segment handling
 │   │
 │   ├── components/              # Component XML reference documentation
-│   │   ├── process_component.md              # Use when: creating/editing process XML - defines shape positioning, dragpoint connections, and canvas structure
+│   │   ├── process_component.md              # Use when: creating/editing process XML - shape positioning, dragpoint connections, canvas structure, and process options (Process Mode/workload, allowSimultaneous, updateRunDates, enableUserLog, purgeDataImmediately, processLogOnErrorOnly, stopProcessingIfZeroDocuments)
+│   │   ├── process_route_component.md         # Use when: building the routing table for a Process Route step - mapping route keys to subprocess GUIDs and return paths to subprocess Return Documents shapes. Pairs with steps/process_route_step.md.
 │   │   ├── json_profile_component.md         # Use when: defining JSON document schemas for validation, accessing JSON fields in Maps/Set Properties, consolidating array elements
 │   │   ├── xml_profile_component.md          # Use when: defining XML document schemas with namespaces, accessing XML elements/attributes in Maps/Set Properties
 │   │   ├── flat_file_profile_component.md    # Use when: defining CSV/delimited file schemas, creating placeholder profiles for Map component sources
 │   │   ├── edi_profile_component.md          # Use when: defining EDI document schemas, troubleshooting EDI parsing failures, understanding Boomi-specific EDI configuration. Includes Transaction Set ID → GS-01 mapping and HIPAA GS-08 Implementation Convention codes.
+│   │   ├── database_profile_component.md     # type: "profile.db". Use when: defining request/response structure for the Database (Legacy) connector - SQL statements, stored procedures, dynamic vs standard insert/update/delete, result-set columns. NOT for Database V2 (which uses JSON profiles).
 │   │   ├── map_component.md                  # Use when: creating field-to-field transformations between profiles, understanding map generation rules and mapping patterns
 │   │   ├── map_component_functions.md        # Use when: applying transformations within maps - string manipulation, date formatting, conditionals, math, lookups
+│   │   ├── map_script_component.md           # Use when: creating a standalone reusable map-scripting component (type="script.mapping", Groovy or JavaScript) and referencing it from a Map's Scripting function instead of an inline script
 │   │   ├── rest_connection_component.md      # connectorType: "officialboomi-X3979C-rest-prod". Use when: creating REST API connections - base URLs, authentication patterns, timeouts, connection pooling
 │   │   ├── rest_connector_operation_component.md # Use when: defining REST operations - HTTP methods, resource paths, headers, query parameters, request/response profiles
 │   │   ├── http_client_component.md          # connectorType: "http". Use when: working with existing HTTP Client assets, or when the user explicitly requests HTTP Client. Never select HTTP over REST on agent judgment alone
+│   │   ├── database_connection_component.md      # subType: "database" — Database (Legacy). Use when: creating Database (Legacy) connections - host/port/dbname, driver type, connection pooling, write-SQL-to-file. NOT Database V2.
 │   │   ├── databasev2_connection_component.md    # connectorType: "officialboomi-X3979C-dbv2da-prod". Use when: creating database connections - JDBC URLs, drivers, credentials, connection management
+│   │   ├── database_connector_operation_component.md   # subType: "database" — Database (Legacy). Use when: defining Database (Legacy) Get/Send actions - commit options, JDBC batching, batch count/max rows, ReadProfile/WriteProfile references. SQL lives in the profile.db. NOT Database V2.
 │   │   ├── databasev2_connector_operation_component.md # Use when: defining database operations - SQL queries, dynamic operations, GET/INSERT/UPDATE/DELETE, response profiles
 │   │   ├── event_streams_connection_component.md # connectorType: "officialboomi-X3979C-events-prod". Use when: creating Boomi Event Streams connections - environment tokens, cloud service authentication
-│   │   ├── event_streams_listen_operation_component.md # Use when: defining Listen operations for continuous event-driven or pub/sub processing (start shape subscribers)
-│   │   ├── event_streams_consume_operation_component.md # Use when: defining Consume operations for on-demand message batch retrieval (mid-process - not event triggered or pub/sub)
+│   │   ├── event_streams_listen_operation_component.md # Use when: defining Listen operations for continuous event-driven or pub/sub processing (start shape subscribers); dead-letter queue behavior (Shared + transacted + maxRetries)
+│   │   ├── event_streams_consume_operation_component.md # Use when: defining Consume operations for on-demand message batch retrieval (mid-process - not event triggered or pub/sub); reprocessing a dead-letter queue (consumeFromDeadLetter)
 │   │   ├── event_streams_produce_operation_component.md # Use when: defining Produce operations for publishing messages to Boomi Event Streams topics (pub/sub publishers)
 │   │   ├── salesforce_connection_component.md    # connectorType: "salesforce". Use when: working with Salesforce connections (GUI-created only, but able to be used by this skill) - OAuth flows, session authentication
 │   │   ├── salesforce_connector_operation_component.md # Use when: working with existing Salesforce operations (GUI-imported) - filters, field selection, query options
@@ -147,6 +152,7 @@ Default to the local `references/` content — it is curated and verified for th
 │   ├── steps/                   # Process step XML reference documentation
 │   │   ├── start_step.md        # Process entry points. Use when configuring new process canvases - includes scheduled, manual, and listener API processes
 │   │   ├── rest_connector_step.md    # REST API calls. Use when: calling external HTTP/REST APIs (for `connectorType="http"`: see components/http_client_component.md)
+│   │   ├── database_connector_step.md   # connectorType: "database" — Database (Legacy). Use when: using the Database (Legacy) connector in a process - Get/Send actions driven by a profile.db, input parameter binding. NOT Database V2.
 │   │   ├── databasev2_connector_step.md # Database operations. Use when: querying/updating databases, executing SQL, working with relational data
 │   │   ├── salesforce_connector_step.md # Salesforce operations (requires GUI setup). Use when: querying/updating Salesforce objects, working with CRM data
 │   │   ├── boomi_for_sap_step.md    # Boomi for SAP operations. Use when: querying Core-exposed SAP objects with JSON responses, runtime parameter binding for SAP filters
@@ -166,6 +172,7 @@ Default to the local `references/` content — it is curated and verified for th
 │   │   ├── branch_step.md       # Sequential multi-path document routing. Use when: same data needs different processing for different targets or a process should execute multiple distinct workflows
 │   │   ├── flow_control_step.md # Batching and parallel fiber execution. Use when: serializing downstream steps per-document, splitting documents into batches, or spreading documents across parallel threads/processes
 │   │   ├── process_call_step.md # Subprocess invocation and return handling. Use when: modularizing logic, enabling test mode for listener-based processes, combining documents across branches
+│   │   ├── process_route_step.md # Use when: dynamically selecting which subprocess runs from a route key resolved at execution time (vs a static Process Call). Requires a Process Route component, the resource::rout: reference prefix, and independent deploy of every participant.
 │   │   ├── try_catch_step.md    # Error handling and exception routing. Use when: wrapping operations that may fail, implementing process-wide error handling
 │   │   ├── exception_step.md   # Terminate execution with error message. Use when: failing a document or process on validation failure, unhappy-path exits from Decision/Route
 │   │   ├── notify_step.md       # Debug logging with variable substitution. Use when: debugging execution flow, logging property values, logging document payloads at certain points in a process
@@ -179,7 +186,7 @@ Default to the local `references/` content — it is curated and verified for th
 │   │
 │   └── platform_entities/       # Platform service configuration and management
 │       ├── edi_b2b.md           # B2B/EDI architecture, trading partner concepts, supported standards, acknowledgment flows, transaction pair dependencies, X12↔EDIFACT equivalence, validation, communication connectors
-│       ├── event_streams.md     # Topics, subscriptions, and GraphQL entity management
+│       ├── event_streams.md     # Topics, subscriptions, dead-letter queues, and GraphQL entity management
 │       ├── boomi_for_sap.md     # Boomi for SAP architecture, scope boundaries, JSON-formatted SAP integration via Core module
 │       ├── flow.md              # Boomi Flow integration: FSS deployment workflow, Flow Service components, multi-platform development (build Integration first, then Flow)
 │       ├── mcp_server.md          # MCP Server architecture, URL patterns, client configuration, known limitations (Technology Preview)

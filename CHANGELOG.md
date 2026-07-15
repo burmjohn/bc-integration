@@ -1,5 +1,101 @@
 # Changelog
 
+## 1.0.22
+
+- Document Process Call return-path name matching, silent mismatches, and `returnLabel`
+- Document child→parent DPP propagation across a `wait="true"` Process Call
+
+
+## 1.0.21
+
+- Add support for Process Route
+
+## 1.0.20
+
+- Fix component create/push corrupting XML when the `<?xml ?>` declaration shares a line with the `<bns:Component>` root element.
+
+## 1.0.19
+
+- Fix `boomi-deploy.sh --list-environments` to list environments via `POST /Environment/query`.
+
+
+## 1.0.18
+
+- Stamp the resolved component ID onto the root element before pushing component updates.
+
+
+
+## 1.0.17
+
+- Fix create/push/deploy failing for components with bracketed names (e.g. `[System] Order Sync`)
+
+
+## 1.0.16
+
+- Fix component create to stamp the assigned componentId onto the root whether its attribute was empty, stale, or absent.
+- Warn instead of reporting success when the componentId cannot be stamped into the local file.
+
+## 1.0.15
+
+- Require xpath on every connection/operation override field; a missing xpath silently inerts the override.
+- Emit the complete canonical ConnectionOverride block from a platform pull rather than a hand-picked subset.
+- Add error-reference Issue #31 (silently-inert override) with a grep detector; fix the inert <field> examples.
+
+
+## 1.0.14
+
+- Component push reports the resulting version number on success.
+- Clarify the no-change skip message: nothing is sent; use `--force` to push anyway.
+- Correct API troubleshooting guide: HTTP 403 is an authorization failure, not deduplication.
+
+
+## 1.0.13
+
+- Stream component create/push bodies from a tempfile to avoid ARG_MAX overflow on large processes
+
+
+## 1.0.12
+
+- Document process options and their effects
+
+
+## 1.0.11
+
+- CLI scripts now exit non-zero on API/operation failures, so callers detect failed pushes, creates, and deploys.
+- `xml_attr` returns empty on no-match instead of aborting under `set -euo pipefail`, so missing-field guards print their diagnostics.
+
+
+## 1.0.10
+
+- Fix REST connector dynamic-property key for custom request headers (`requestHeaders`)
+
+## 1.0.9
+
+- Document Event Streams dead-letter queue (DLQ)
+
+
+## 1.0.8
+
+- Add Database (Legacy) profile (`profile.db`) coverage to the Document Cache component reference.
+
+
+## 1.0.7
+
+- Add Database (Legacy) connector references: connection, operation, database profile, and step
+
+
+## 1.0.6
+
+- Added support for reusable Map Script components that a map can reference instead of an inline script, and when to use each.
+- Fixed a defect in the component-creation script that could blank a component's reference to another component on create.
+
+
+## 1.0.5
+
+- Strengthen instructions to avoid mapping the output of one function into the input of another
+- Add componentId to map component sample snippets
+
+
 ## 1.0.4
 
 - Add Flow Control step reference (`flow_control_step.md`) to the `boomi-integration` skill, covering batching, parallel fiber execution, scope-of-effect, document ordering across fibers, and state sharing between fibers and the controlling execution.
