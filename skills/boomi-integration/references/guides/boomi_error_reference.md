@@ -17,11 +17,11 @@ A comprehensive guide to Boomi error patterns, silent failures, and issues that 
 | Symptom | Check Issue # |
 |---------|----------------|
 | Variables appear literally in output | #1 (Quote Escaping) |
+| `can't parse argument number` error at execution | #1 (Quote Escaping) |
 | API authentication failures (no error) | #2 (Environment Variables) |
 | Subprocess updates not taking effect | #3 (Deployment Dependency) |
 | Map output ignored by connector | #4 (Connector Parameters) |
 | GET request errors with body | #5 (REST GET Clearing) |
-| Documents flowing but content lost | #6 (Profile Type Trap) |
 | Components in wrong folder | #7 (Folder Placement) |
 | XML validation errors during push | #8 (Schema Mistakes) |
 | Stack overflow in map editor | #9 (Map Function Attributes) |
@@ -32,7 +32,7 @@ A comprehensive guide to Boomi error patterns, silent failures, and issues that 
 | Blank canvas in GUI (JavaScript error) | #14 (Branch numBranches) |
 | NullPointerException at runtime / stack overflow in GUI | #15 (Stop continue Attribute) |
 | Empty action picklist in WSS operation | #16 (WSS actionType) |
-| Script engine null error in Data Process | #17 (Groovy Attributes) |
+| Script engine null error in Data Process | #17 (Script Engine Attributes) |
 | "No document" error with perExecution | #18 (Notify perExecution) |
 | WSS requests hitting wrong process | #19 (Listener Path Collision) |
 | MCP tool schema changes not applied | #20 (MCP Profile/Schema Sync) |
@@ -60,7 +60,7 @@ A comprehensive guide to Boomi error patterns, silent failures, and issues that 
 | 3 | Parent-Subprocess Deployment Dependency | High | Silent - old behavior |
 | 4 | Connector Parameters Override Document Content | Medium | Silent - data ignored |
 | 5 | REST GET Document Clearing | Medium | Runtime error |
-| 6 | REST Connector Profile Type Trap | Medium | Silent - document loss |
+| 6 | REST Connector Profile Type Trap (historical, resolved in V11) | — | No longer occurs on V11+ runtimes |
 | 7 | Folder Placement Verification | High | Design-time visibility |
 | 8 | Common XML Schema Mistakes | High | Design-time validation |
 | 9 | Map Function GUI Requirements | Low | GUI rendering error |
@@ -144,6 +144,7 @@ Single quotes toggle between literal mode and variable substitution. Inside sing
 - **Single quote exits literal mode**: Back to variable substitution
 - **Literal single quote**: Use two single quotes (`''`) to output one quote
 - **Critical Pattern**: `'literal text '{variable}' more literal '{variable2}' end'`
+- **Bare `{}` fails at execution** (push and deploy succeed): `can't parse argument number: ; Caused by: For input string: ""`. Output a literal `{}` with `<msgTxt>'{}'</msgTxt>`.
 
 ### Copy-Paste Templates (Working Patterns)
 
@@ -374,7 +375,7 @@ REST GET connectors:
 ```xml
 <!-- Message step creates document -->
 <message combined="false">
-  <msgTxt>{"search": "criteria"}</msgTxt>
+  <msgTxt>'{"search": "criteria"}'</msgTxt>
 </message>
 
 <!-- REST GET inherits document content -->
@@ -388,7 +389,7 @@ REST GET connectors:
 ```xml
 <!-- Message step creates document for other purposes -->
 <message combined="false">
-  <msgTxt>{"search": "criteria"}</msgTxt>
+  <msgTxt>'{"search": "criteria"}'</msgTxt>
 </message>
 
 <!-- Empty Message step clears document content -->
@@ -415,40 +416,11 @@ For REST GET: Check upstream creates content → Add empty Message step before G
 
 ---
 
-## Issue #6: REST Connector Profile Type Trap
+## Issue #6: REST Connector Profile Type Trap (historical — resolved in V11)
 
-**Frequency:** Medium
-**Detection:** Silent - document flow continues but content is corrupted
+**Status:** Obsolete as of REST Client connector Version 11, which added selectable request/response profiles. Retained only as a note for pre-V11 runtimes.
 
-### The Problem
-
-REST connector operations in Boomi GUI do NOT support `requestProfileType` or `responseProfileType` attributes despite what some documentation suggests. Including these attributes causes silent document content loss.
-
-### Why It Happens
-
-Connector reports success, logs show documents flowing, but content is lost/corrupted. No design-time errors - fails silently at runtime.
-
-### Wrong Pattern - Silent Document Loss
-
-```xml
-<!-- CAUSES SILENT DOCUMENT FLOW FAILURES -->
-<GenericOperationConfig customOperationType="GET"
-                        operationType="EXECUTE"
-                        requestProfileType="none"
-                        responseProfileType="json">
-```
-
-### Correct Pattern - No Profile Type Attributes
-
-```xml
-<!-- CORRECT: No profile type attributes -->
-<GenericOperationConfig customOperationType="GET"
-                        operationType="EXECUTE">
-```
-
-### Pre-Push Checklist
-
-Remove `requestProfileType` and `responseProfileType` attributes. Use Map/Set Properties for response parsing instead.
+Before Version 11, REST operations did not support request/response profiles, and older guidance was to strip `requestProfileType`/`responseProfileType`. On Version 11+ these attributes are supported when paired with a profile, and **inert when no profile is linked**. Document the supported pattern instead — see `components/rest_connector_operation_component.md`.
 
 ---
 
@@ -468,6 +440,7 @@ Components land in account root folder instead of designated project folder desp
 - Folder ID placeholder patterns (`{FOLDER_GUID}`) not resolved before API call
 - Environment variable `BOOMI_TARGET_FOLDER` not resolving correctly
 - Tool folder resolution logic issues
+- Agent deliberately chose a different parent folder (e.g. to match existing account conventions) — build under `BOOMI_TARGET_FOLDER` when set, unless the user explicitly directed otherwise
 
 ### Wrong Patterns
 
@@ -476,7 +449,7 @@ Components land in account root folder instead of designated project folder desp
 <bns:Component componentId=""
                name="Component_Name"
                type="profile.json"
-               folderFullPath="ClaudeCode/ProjectFolder">
+               folderFullPath="TargetFolder/ProjectFolder">
 <!-- Result: Component lands in root folder -->
 
 <!-- Pattern 2: Placeholder not resolved -->
@@ -596,44 +569,44 @@ cvc-enumeration-valid: Value 'setproperties' is not facet-valid
 ## Issue #9: Map Function GUI Requirements
 
 **Frequency:** Low
-**Detection:** GUI rendering error - stack overflow in map editor
+**Detection:** Map editor loads a blank canvas; browser console shows `Maximum call stack size exceeded`
 
 ### The Problem
 
-Map component functions missing required attributes cause stack overflow errors when opening in Boomi GUI map editor.
+A `<FunctionStep>` without `x`/`y` canvas coordinates cannot be rendered by the Boomi map editor — the canvas loads blank and the browser throws a stack-overflow error. API push and process execution are unaffected; the failure is GUI-only, and a single coordinate-less function is enough to trigger it.
 
 ### Wrong Pattern
 
 ```xml
-<functions>
-  <function default="false" functionType="groovy2">
-    <!-- Missing required attributes -->
-    <script>return input1 + input2</script>
-  </function>
-</functions>
+<Functions optimizeExecutionOrder="true">
+  <FunctionStep category="Scripting" key="1" name="Scripting"
+                position="1" type="Scripting">
+    <!-- Missing x/y coordinates -->
+  </FunctionStep>
+</Functions>
 ```
 
 ### Correct Pattern
 
 ```xml
-<functions>
-  <function default="false" functionType="groovy2"
-            cacheEnabled="true" sumEnabled="false"
-            x="100" y="100">
-    <script>return input1 + input2</script>
-  </function>
-</functions>
+<Functions optimizeExecutionOrder="true">
+  <FunctionStep cacheEnabled="true" category="Scripting" key="1" name="Scripting"
+                position="1" sumEnabled="false" type="Scripting" x="10.0" y="10.0">
+    ...
+  </FunctionStep>
+</Functions>
 ```
 
-### Required Attributes
+### Attributes
 
-- `cacheEnabled="true"` - Enable function result caching
-- `sumEnabled="false"` - Disable sum aggregation
-- `x="100"` and `y="100"` - Canvas coordinates for GUI positioning
+- `x` and `y` — required for GUI rendering. Start the first function at `y="10.0"` and increment ~140px per function.
+- `cacheEnabled`/`sumEnabled` — GUI-authored (`true`/`false`), not required for push, execution, or rendering. Emitting them matches what the GUI writes.
+
+See `references/components/map_component_functions.md` for full detail.
 
 ### Additional Consideration
 
-**Map function independence:** Each function widget should be standalone - no chaining function outputs to other function inputs. For complex multi-step transformations, use single Groovy function instead of chaining.
+**Map function independence:** Within a map's `<Functions>`, each function widget must be standalone - never wire one function's output to another function's input. For multi-step transformations, prefer a User-Defined Function component (`transform.function`, where step-to-step chaining is legal - see `references/components/user_defined_function_component.md`); use a single scripting function only when the logic genuinely needs code.
 
 ---
 
@@ -760,7 +733,7 @@ Temporary test Message shapes added for subprocess isolated testing are forgotte
 <!-- Test Message shape for isolated testing -->
 <shape x="100" y="200" shapetype="message">
   <message combined="false">
-    <msgTxt>{"test": "data", "mode": "development"}</msgTxt>
+    <msgTxt>'{"test": "data", "mode": "development"}'</msgTxt>
   </message>
 </shape>
 
@@ -1110,7 +1083,7 @@ See references/steps/start_step.md for complete start step XML reference and WSS
 
 ### The Problem
 
-Data Process Custom Scripting steps missing required `language` and `useCache` attributes deploy successfully to the platform but fail at runtime with cryptic error: "Failed loading script engine null". The XML pushes without validation errors, but execution fails.
+Data Process Custom Scripting steps missing the required `language` attribute deploy successfully to the platform but fail at runtime with cryptic error: "Failed loading script engine null". The XML pushes without validation errors, but execution fails. (The `useCache` attribute is a performance flag, not required for execution — only `language` is load-bearing.)
 
 **Real-World Symptoms:**
 - Process deploys without errors
@@ -1121,7 +1094,7 @@ Data Process Custom Scripting steps missing required `language` and `useCache` a
 
 ### Why It Happens
 
-The platform API accepts `<dataprocessscript>` elements without the `language` attribute during component push. However, at runtime, the Groovy script engine initialization requires this attribute to determine which scripting engine to load. Without it, the engine lookup returns null, causing immediate NullPointerException.
+The platform API accepts `<dataprocessscript>` elements without the `language` attribute during component push. However, at runtime, script engine initialization requires this attribute to determine which scripting engine to load. Without it, the engine lookup returns null, causing immediate NullPointerException.
 
 **Root Cause:** Platform validation doesn't enforce required scripting attributes, but runtime engine requires them.
 
@@ -1175,23 +1148,23 @@ The platform API accepts `<dataprocessscript>` elements without the `language` a
 
 ### Critical Rule
 
-**Always include both required attributes on `<dataprocessscript>` elements:**
-- `language="groovy2"` - Specifies Groovy 2.4 runtime (REQUIRED)
-- `useCache="true"` - Enables script compilation caching (REQUIRED for performance)
+**Always include the `language` attribute on `<dataprocessscript>` elements:**
+- `language` - Specifies which script engine to load (REQUIRED). Valid tokens are `groovy2` (Groovy 2.4, the default), `groovy` (Groovy 1.5), and `javascript` (JavaScript). What matters for this error is that the attribute is *present*; any valid token avoids it.
+- `useCache="true"` - Script compilation caching flag (recommended, not required for execution — a step runs whether it is `"true"`, `"false"`, or omitted).
 
-Without these attributes, the script engine cannot initialize and runtime execution fails immediately.
+Without the `language` attribute, the script engine cannot initialize and runtime execution fails immediately.
 
 ### Pre-Push Checklist
 
 Before pushing any Data Process Custom Scripting steps:
 1. [ ] Locate all `<dataprocessscript>` elements in component XML
-2. [ ] Verify each has `language="groovy2"` attribute
-3. [ ] Verify each has `useCache="true"` attribute
+2. [ ] Verify each has a `language` attribute (`groovy2` default; `groovy`/`javascript` also valid)
+3. [ ] Optionally set `useCache="true"` (performance flag; not required for execution)
 4. [ ] Test execution after deployment to confirm script runs successfully
 
 ### Related Step Documentation
 
-See references/steps/data_process_groovy_step.md for complete Custom Scripting (Groovy) XML reference and examples.
+See references/steps/data_process_custom_scripting.md for complete Custom Scripting XML reference and examples.
 
 ---
 
@@ -1744,7 +1717,7 @@ Groovy scripts inside `<dataprocessscript>` components are compiled by the Atom 
 
 ### Why It Happens
 
-The platform API validates XML schema at push and deployment metadata at deploy, but the `<script>` body is stored as opaque text. Groovy compilation happens inside the Atom on first execution, via the `language="groovy2"` engine configured on `<dataprocessscript>`. Push-time and deploy-time checks never exercise the Groovy parser, so syntactic issues cannot surface until runtime.
+The platform API validates XML schema at push and deployment metadata at deploy, but the `<script>` body is stored as opaque text. Compilation happens inside the runtime the first time a script executes, via the script engine selected by the `language` attribute on `<dataprocessscript>`. Push-time and deploy-time checks never exercise the script parser, so syntactic issues cannot surface until execution. (The same deploy-clean / execution-fail pattern applies to JavaScript scripts, which the Nashorn engine likewise compiles on first execution.)
 
 ### Wrong Pattern — Treating Deploy Success as Verification
 
@@ -1769,7 +1742,7 @@ After any change to a `<dataprocessscript>` body, execute the process, then veri
 
 ### Related
 
-- `references/steps/data_process_groovy_step.md` — Data Process Groovy step reference
+- `references/steps/data_process_custom_scripting.md` — Data Process Custom Scripting step reference
 - Issue #17 documents a sibling "deploy-clean, runtime-fails" pattern for the same step type (missing `language`/`useCache`)
 
 ---
